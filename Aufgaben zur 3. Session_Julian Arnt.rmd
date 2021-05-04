@@ -89,23 +89,20 @@ books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
 ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
 ```
 
+
 ```{r}
 all <- books %>%
-  left_join(ratings)
-```
-
-# Ist es sinvoll alle Bewertungen in die Analyse einfließen zu lassen?
-```{r}
-all2 <- all %>%
-  select(`User-ID`, `Book-Author`) %>%
-  group_by(`User-ID`, `Book-Author`) %>%
+  left_join(ratings) %>%
+  select(`User-ID`, `Book-Title`) %>%
+  group_by(`User-ID`, `Book-Title`) %>%
   summarise(anzahl_user = n()) %>%
   filter(anzahl_user > 1) %>%
   ungroup() 
 ```
-Nein, zum Beispiel macht es keinen Sinn die Daten von Usern zu verwenden, die nur ein Buch bewertet haben. Wir können aus einer einzigen Bewertung keine Präferenz rauslesen. 
+# Macht es Sinn alle Bewetungen in die Analyse einfließen zu lassen?
+Nein, zum Beispiel macht es keinen Sinn die Daten von Usern zu verwenden, die nur ein Buch bewertet haben. Wir können aus einer einzigen Bewertung keine Präferenz rauslesen.
 ```{r}
-user_w_author <- split(all2$`Book-Author`,all2$`User-ID`) 
+user_w_author <- split(all$`Book-Title`,all$`User-ID`) 
 ```
 
 ```{r}
@@ -113,14 +110,40 @@ trans <- as(user_w_author, "transactions")
 ```
 
 # Spielen Sie mit den Support- und Confidence-Werten. Was fällt Ihnen auf?
-Ich lege damit den Minimalwert fest, den eine Transaktion in den jeweiligen Katergorien erreichen muss. Somit kann ich indirekt die Anzahl an Rules beeinflussen.
+Ich lege damit den Minimalwert fest, den eine Transaktion in den jeweiligen Katergorien erreichen muss. Somit kann ich indirekt die Anzahl an Rules beeinflussen. 
 ```{r}
-trans.rules <- apriori(trans, parameter=list(supp=0.01, conf=0.3, target="rules"))
+trans.rules <- apriori(trans, parameter=list(supp=0.004, conf=0.3,  minlen=2, target="rules"))
+```
+
+```{r}
+head(inspect(subset(trans.rules)), 30)
+```
+```{r}
+all1 <- books %>%
+  left_join(ratings) %>%
+  select(`User-ID`, `Book-Author`) %>%
+  group_by(`User-ID`, `Book-Author`) %>%
+  summarise(anzahl_user = n()) %>%
+  filter(anzahl_user > 1) %>%
+  ungroup() 
+```
+
+
+```{r}
+user_w_author1 <- split(all1$`Book-Author`,all1$`User-ID`) 
+```
+
+```{r}
+trans1 <- as(user_w_author1, "transactions") 
+```
+
+```{r}
+trans.rules1 <- apriori(trans1, parameter=list(supp=0.01, conf=0.3,  minlen=2, target="rules"))
 ```
 
 # Assoziationsanalyse mit Autoren-Namen
 ```{r}
-head(inspect(subset(trans.rules)), 50)
+head(inspect(subset(trans.rules1)), 50)
 ```
 An der ersten Zeile kann man ablesen, dass die Kombination Thomas Harris+Stephen King 148 mal vorkommt. Wenn Thomas Harris in der Kombination vorkommt, dann kommt Stephen King zu 70% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 7x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
 
@@ -128,11 +151,11 @@ An der ersten Zeile kann man ablesen, dass die Kombination Thomas Harris+Stephen
 Zum einen fällt die Inkonsistenz bei den Namen der Autor*innen. So wird z.B. Dean R. Koontz einmal mit R. und einmal ohne geschrieben. Ich habe versucht, diese Inkonsistenz mit mutate(`Book-Author` = str_remove(`Book-Author`, verschiedene Kombinationen)) zu beheben. Leider habe ich es nur geschafft, dass alle Inhalte dieser Spalte gelöscht werden oder dass nur der erste Buchstabe gelöscht wird (dafür habe ich sogar zwei verschiedene Wege gefunden; einmal "[a-z.]" und dann noch "r sternchen."). Mein Versuch die Punkte in den Autorennamen durch Kommas zu ersetzen scheitert ebenfalls. Ich kann jetzt aber mit mutate(`Book-Author` = str_replace(`Book-Author`, ".", ",")) den ersten Buchstaben des Namens durch ein Komma ersetzen. Ich frage mich, warum dann immer der erste Buchstabe genommen wird? Liegt es daran, dass der Punkt für jedes beliebige Zeichen steht und weil ich den Bereich nicht genauer definiert habe, wird einfach immer der erste Buchstabe als Ziel des Befehls genommen? 
 
 ```{r}
-subrules <- head(trans.rules, n = 15, by = "lift")
+subrules1 <- head(trans.rules1, n = 15, by = "lift")
 ```
 
 ```{r}
-plot(subrules, method = "graph")
+plot(subrules1, method = "graph")
 ```
 An diesem Graphen können wir auch erkennen, dass es eine starke Verbindung zwischen Danielle Steel und Nora Roberts geben muss, da der Kreis, der sie verbindet, sehr dunkel ist, was einen hohen Lift-Wert angibt.
 
@@ -144,16 +167,11 @@ ratings2 <- ratings %>%
 Hier habe ich mich dazu entschlossen nur noch Daten zu nehmen, in denen klar wird, dass der User den Autoren wirklich mochte. Dafür habe ich alle Bewertungen von 6 oder schlechter rausgeworfen.
 
 ```{r}
-all3 <- books %>%
-  left_join(ratings2) %>%
-   select(`User-ID`, `Book-Author`) %>%
-  group_by(`User-ID`, `Book-Author`) %>%
-  summarise(anzahl_user = n()) %>%
-  filter(anzahl_user > 1) %>%
-  ungroup()
+all2 <- books %>%
+  left_join(ratings2)
 ```
 ```{r}
-user_w_author2 <- split(all3$`Book-Author`,all3$`User-ID`) 
+user_w_author2 <- split(all2$`Book-Author`,all2$`User-ID`) 
 ```
 
 ```{r}
@@ -169,3 +187,4 @@ head(inspect(subset(trans.rules2)), 30)
 An der ersten Zeile kann man ablesen, dass die Kombination Richard Laymon+Stephen King 8 mal vorkommt. Wenn Richard Laymon in der Kombination vorkommt, dann kommt Stephen King zu 60% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 9,2x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
 
 # Welche anderen Features wären sinnvoll?
+Man könnte auch nur die Bewertungen von Usern zählen, die zumindest 2 Bücher von einem'r Autor'in gelesen haben, da ich es schwierig finde zu sagen, dass man den'ie Autoren'in mag, wenn man nur ein Buch von dieser Person gelesen hat.
