@@ -31,9 +31,12 @@ library(readr)
 ratings <- read_delim("BX-Book-Ratings.csv", 
     ";", escape_double = FALSE, trim_ws = TRUE)
 ```
+```{r}
+books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
+```
 
 ```{r}
-books <- books %>%
+books1 <- books %>%
   select(ISBN, `Year-Of-Publication`, `Book-Author`, `Book-Title`, Publisher) %>%
   mutate(`Book-Author` = str_to_lower(`Book-Author`), 
          `Book-Author` = str_replace(`Book-Author`, "ç", "c"),
@@ -77,12 +80,19 @@ books <- books %>%
          `Book-Title` = str_replace(`Book-Title`, "â", "a"),
          `Book-Title` = str_replace(`Book-Title`, "ú", "u"),
          `Book-Title` = str_replace(`Book-Title`, "ü", "u"),
+         `Book-Author` = str_remove(`Book-Author`, "[a-z]\\."),
          Publisher = str_to_lower(Publisher),
          ISBN = str_extract(ISBN, "[0-9]*X*")) 
 ```
 
 ```{r}
-books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
+books2 <- books1 %>%
+  mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\."))
+```
+
+```{r}
+books3 <- books2 %>%
+  mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\."))
 ```
 
 ```{r}
@@ -91,7 +101,7 @@ ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
 
 
 ```{r}
-all <- books %>%
+all <- books3 %>%
   left_join(ratings) %>%
   select(`User-ID`, `Book-Title`) %>%
   group_by(`User-ID`, `Book-Title`) %>%
@@ -100,7 +110,7 @@ all <- books %>%
   ungroup() 
 ```
 # Macht es Sinn alle Bewetungen in die Analyse einfließen zu lassen?
-Nein, zum Beispiel macht es keinen Sinn die Daten von Usern zu verwenden, die nur ein Buch bewertet haben. Wir können aus einer einzigen Bewertung keine Präferenz rauslesen.
+Nein, zum Beispiel macht es keinen Sinn die Daten von User*innen zu verwenden, die nur ein Buch bewertet haben. Wir können aus einer einzigen Bewertung keine Präferenz rauslesen.
 ```{r}
 user_w_author <- split(all$`Book-Title`,all$`User-ID`) 
 ```
@@ -119,7 +129,7 @@ trans.rules <- apriori(trans, parameter=list(supp=0.004, conf=0.3,  minlen=2, ta
 head(inspect(subset(trans.rules)), 30)
 ```
 ```{r}
-all1 <- books %>%
+all1 <- books3 %>%
   left_join(ratings) %>%
   select(`User-ID`, `Book-Author`) %>%
   group_by(`User-ID`, `Book-Author`) %>%
@@ -148,7 +158,11 @@ head(inspect(subset(trans.rules1)), 50)
 An der ersten Zeile kann man ablesen, dass die Kombination Thomas Harris+Stephen King 148 mal vorkommt. Wenn Thomas Harris in der Kombination vorkommt, dann kommt Stephen King zu 70% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 7x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
 
 # Fällt Ihnen etwas bei der Datenqualität auf und wie kann man es mit regulären Ausdrücken beheben?
-Zum einen fällt die Inkonsistenz bei den Namen der Autor*innen. So wird z.B. Dean R. Koontz einmal mit R. und einmal ohne geschrieben. Ich habe versucht, diese Inkonsistenz mit mutate(`Book-Author` = str_remove(`Book-Author`, verschiedene Kombinationen)) zu beheben. Leider habe ich es nur geschafft, dass alle Inhalte dieser Spalte gelöscht werden oder dass nur der erste Buchstabe gelöscht wird (dafür habe ich sogar zwei verschiedene Wege gefunden; einmal "[a-z.]" und dann noch "r sternchen."). Mein Versuch die Punkte in den Autorennamen durch Kommas zu ersetzen scheitert ebenfalls. Ich kann jetzt aber mit mutate(`Book-Author` = str_replace(`Book-Author`, ".", ",")) den ersten Buchstaben des Namens durch ein Komma ersetzen. Ich frage mich, warum dann immer der erste Buchstabe genommen wird? Liegt es daran, dass der Punkt für jedes beliebige Zeichen steht und weil ich den Bereich nicht genauer definiert habe, wird einfach immer der erste Buchstabe als Ziel des Befehls genommen? Vielleicht könnte man auswählen, dass Zeichenketten von einer bestimmten Länge entfernt werden sollen. Da ist die Frage, wie das gehen soll. Allgemein würde ich sagen, dass mein Datensatz schon relativ gut bereiningt ist, was die Namen der Autor'innen angeht.
+Zum einen fällt die Inkonsistenz bei den Namen der Autor*innen. So wird z.B. Dean R. Koontz einmal mit R. und einmal ohne geschrieben. Ich habe versucht, diese Inkonsistenz mit mutate(`Book-Author` = str_remove(`Book-Author`, verschiedene Kombinationen)) zu beheben. Leider habe ich es nur geschafft, dass alle Inhalte dieser Spalte gelöscht werden oder dass nur der erste Buchstabe gelöscht wird (dafür habe ich sogar zwei verschiedene Wege gefunden; einmal "[a-z.]" und dann noch "r sternchen."). Mein Versuch die Punkte in den Autorennamen durch Kommas zu ersetzen scheitert ebenfalls. Ich kann jetzt aber mit mutate(`Book-Author` = str_replace(`Book-Author`, ".", ",")) den ersten Buchstaben des Namens durch ein Komma ersetzen. Ich frage mich, warum dann immer der erste Buchstabe genommen wird? Liegt es daran, dass der Punkt für jedes beliebige Zeichen steht und weil ich den Bereich nicht genauer definiert habe, wird einfach immer der erste Buchstabe als Ziel des Befehls genommen? Vielleicht könnte man auswählen, dass Zeichenketten von einer bestimmten Länge entfernt werden sollen. Da ist die Frage, wie das gehen soll. 
+
+Update: Ich habe mir den nötigen Code zusammengebastellt mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\.")). Tatsächlich hat mir nur das Wissen gefehlt, wie ich dem System klarmache, dass ich mit "." auch wirklich einen Punkt meine und es nicht ein Stammplatzhalter für alle möglichen Zeichen sein soll. Da jedes Mal immer nur der erste Buchstabe entfernt wurde, der auf einem "." endet, habe ich den Datensatz dreimal mit diesem Befehl bereinigt und gehe jetzt davon aus, dass die meisten der Kürzel bereinigt wurden. Es ist keine sehr elegante Methode drei mal den Befehl zu wiederholen, aber es erfüllt meine Wünsche. Wenn es doch nur dafür sorgen könnte, dass ich nicht die ganze Zeit bis in den Morgen an Data Science rumsitze und mir den Kopf zerbreche `seufz`.
+
+Nun habe ich nur noch das Problem, dass bei manchen Autor*innen die Zweitnamen ausgeschrieben wurden. Dies wird in der folgenden Warenkorbanalyse bei Patricia Daniels Cornwell sichtbar. Alle Namen bis auf den ersten Buchstaben zu kürzen wäre zu radikal und ungenau. Dann könnte RStudio nicht mehr zwischen Tom Alby und Thomas Anders unterscheiden. Nur den Zweitnamen entfernen geht auch schlecht, da ich damit auch Gefahr laufen würde die Nachnamen von Autor'innen ohne Zweitnamen zu entfernen. Das ist wohl der Punkt, an dem ich mich mit meinem Datensatz zufrieden stellen muss.
 
 ```{r}
 subrules1 <- head(trans.rules1, n = 15, by = "lift")
@@ -164,10 +178,10 @@ An diesem Graphen können wir auch erkennen, dass es eine starke Verbindung zwis
 ratings2 <- ratings %>%
   filter(`Book-Rating` > 6)
 ```
-Hier habe ich mich dazu entschlossen nur noch Daten zu nehmen, in denen klar wird, dass der User den Autoren wirklich mochte. Dafür habe ich alle Bewertungen von 6 oder schlechter rausgeworfen.
+Hier habe ich mich dazu entschlossen nur noch Daten zu nehmen, in denen klar wird, dass de User den Autoren wirklich mochte. Dafür habe ich alle Bewertungen von 6 oder schlechter rausgeworfen.
 
 ```{r}
-all2 <- books %>%
+all2 <- books3 %>%
   left_join(ratings2)
 ```
 ```{r}
@@ -184,7 +198,7 @@ trans.rules2 <- apriori(trans2, parameter=list(supp=0.001, conf=0.3, target="rul
 ```{r}
 head(inspect(subset(trans.rules2)), 30)
 ```
-An der ersten Zeile kann man ablesen, dass die Kombination Richard Laymon+Stephen King 8 mal vorkommt. Wenn Richard Laymon in der Kombination vorkommt, dann kommt Stephen King zu 60% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 9,2x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
+An der zweiten Zeile kann man ablesen, dass die Kombination Scott Turow + John Grisham 61 mal vorkommt. Wenn RScott Turow in der Kombination vorkommt, dann kommt John Grisham zu 32% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 9,4x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
 
 # Welche anderen Features wären sinnvoll?
-Man könnte auch nur die Bewertungen von Usern zählen, die zumindest 2 Bücher von einem'r Autor'in gelesen haben, da ich es schwierig finde zu sagen, dass man den'ie Autoren'in mag, wenn man nur ein Buch von dieser Person gelesen hat.
+Man könnte auch nur die Bewertungen von User*innen zählen, die zumindest 2 Bücher von einem'r Autor'in gelesen haben, da ich es schwierig finde zu sagen, dass man den'ie Autoren'in mag, wenn man nur ein Buch von dieser Person gelesen hat.
