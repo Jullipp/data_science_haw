@@ -39,61 +39,53 @@ books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
 books1 <- books %>%
   select(ISBN, `Year-Of-Publication`, `Book-Author`, `Book-Title`, Publisher) %>%
   mutate(`Book-Author` = str_to_lower(`Book-Author`), 
-         `Book-Author` = str_replace(`Book-Author`, "ç", "c"),
-         `Book-Author` = str_replace(`Book-Author`, "ñ", "n"),
-         `Book-Author` = str_replace(`Book-Author`, "é", "e"),
-         `Book-Author` = str_replace(`Book-Author`, "í", "i"),
-         `Book-Author` = str_replace(`Book-Author`, "ó", "o"),
-         `Book-Author` = str_replace(`Book-Author`, "ò", "o"),
-         `Book-Author` = str_replace(`Book-Author`, "ô", "o"),
-         `Book-Author` = str_replace(`Book-Author`, "ö", "oe"),
-         `Book-Author` = str_replace(`Book-Author`, "ï", "i"),
-         `Book-Author` = str_replace(`Book-Author`, "á", "a"),
-         `Book-Author` = str_replace(`Book-Author`, "à", "a"),
-         `Book-Author` = str_replace(`Book-Author`, "è", "e"),
-         `Book-Author` = str_replace(`Book-Author`, "ê", "e"),
-         `Book-Author` = str_replace(`Book-Author`, "ë", "e"),
-         `Book-Author` = str_replace(`Book-Author`, "å", "a"),
-         `Book-Author` = str_replace(`Book-Author`, "ä", "ae"),
-         `Book-Author` = str_replace(`Book-Author`, "ã", "a"),
-         `Book-Author` = str_replace(`Book-Author`, "â", "a"),
-         `Book-Author` = str_replace(`Book-Author`, "ú", "u"),
-         `Book-Author` = str_replace(`Book-Author`, "ü", "u"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ç", "c"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ñ", "n"),
+         `Book-Author` = str_replace_all(`Book-Author`, "é", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "í", "i"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ó", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ò", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ô", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ö", "oe"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ï", "i"),
+         `Book-Author` = str_replace_all(`Book-Author`, "á", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "à", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "è", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ê", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ë", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "å", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ä", "ae"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ã", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "â", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ú", "u"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ü", "u"),
          `Book-Title` = str_to_lower(`Book-Title`),
-         `Book-Title` = str_replace(`Book-Title`, "ç", "c"),
-         `Book-Title` = str_replace(`Book-Title`, "ñ", "n"),
-         `Book-Title` = str_replace(`Book-Title`, "é", "e"),
-         `Book-Title` = str_replace(`Book-Title`, "í", "i"),
-         `Book-Title` = str_replace(`Book-Title`, "ó", "o"),
-         `Book-Title` = str_replace(`Book-Title`, "ò", "o"),
-         `Book-Title` = str_replace(`Book-Title`, "ô", "o"),
-         `Book-Title` = str_replace(`Book-Title`, "ö", "oe"),
-         `Book-Title` = str_replace(`Book-Title`, "ï", "i"),
-         `Book-Title` = str_replace(`Book-Title`, "á", "a"),
-         `Book-Title` = str_replace(`Book-Title`, "à", "a"),
-         `Book-Title` = str_replace(`Book-Title`, "è", "e"),
-         `Book-Title` = str_replace(`Book-Title`, "ê", "e"),
-         `Book-Title` = str_replace(`Book-Title`, "ë", "e"),
-         `Book-Title` = str_replace(`Book-Title`, "å", "a"),
-         `Book-Title` = str_replace(`Book-Title`, "ä", "ae"),
-         `Book-Title` = str_replace(`Book-Title`, "ã", "a"),
-         `Book-Title` = str_replace(`Book-Title`, "â", "a"),
-         `Book-Title` = str_replace(`Book-Title`, "ú", "u"),
-         `Book-Title` = str_replace(`Book-Title`, "ü", "u"),
-         `Book-Author` = str_remove(`Book-Author`, "[a-z]\\."),
+         `Book-Title` = str_replace_all(`Book-Title`, "ç", "c"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ñ", "n"),
+         `Book-Title` = str_replace_all(`Book-Title`, "é", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "í", "i"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ó", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ò", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ô", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ö", "oe"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ï", "i"),
+         `Book-Title` = str_replace_all(`Book-Title`, "á", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "à", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "è", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ê", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ë", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "å", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ä", "ae"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ã", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "â", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ú", "u"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ü", "u"),
+         `Book-Author` = str_replace_all(`Book-Author`, " .* ", " "),
          Publisher = str_to_lower(Publisher),
          ISBN = str_extract(ISBN, "[0-9]*X*")) 
 ```
 
-```{r}
-books2 <- books1 %>%
-  mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\."))
-```
 
-```{r}
-books3 <- books2 %>%
-  mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\."))
-```
 
 ```{r}
 ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
@@ -101,7 +93,7 @@ ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
 
 
 ```{r}
-all <- books3 %>%
+all <- books1 %>%
   left_join(ratings) %>%
   select(`User-ID`, `Book-Title`) %>%
   group_by(`User-ID`, `Book-Title`) %>%
@@ -129,7 +121,7 @@ trans.rules <- apriori(trans, parameter=list(supp=0.004, conf=0.3,  minlen=2, ta
 head(inspect(subset(trans.rules)), 30)
 ```
 ```{r}
-all1 <- books3 %>%
+all1 <- books1 %>%
   left_join(ratings) %>%
   select(`User-ID`, `Book-Author`) %>%
   group_by(`User-ID`, `Book-Author`) %>%
@@ -155,14 +147,14 @@ trans.rules1 <- apriori(trans1, parameter=list(supp=0.01, conf=0.3,  minlen=2, t
 ```{r}
 head(inspect(subset(trans.rules1)), 50)
 ```
-An der ersten Zeile kann man ablesen, dass die Kombination Thomas Harris+Stephen King 148 mal vorkommt. Wenn Thomas Harris in der Kombination vorkommt, dann kommt Stephen King zu 70% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 7x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
+An der ersten Zeile kann man ablesen, dass die Kombination Thomas Harris+Stephen King 149 mal vorkommt. Wenn Thomas Harris in der Kombination vorkommt, dann kommt Stephen King zu 70% ebenfalls in dieser Transaktion vor. An dem Lift-Wert können wir ablesen, dass die Kombination 7x häufiger erscheint als es der Fall wäre, wenn diese beiden Autoren unabhängig voneinander wären.
 
 # Fällt Ihnen etwas bei der Datenqualität auf und wie kann man es mit regulären Ausdrücken beheben?
 Zum einen fällt die Inkonsistenz bei den Namen der Autor*innen. So wird z.B. Dean R. Koontz einmal mit R. und einmal ohne geschrieben. Ich habe versucht, diese Inkonsistenz mit mutate(`Book-Author` = str_remove(`Book-Author`, verschiedene Kombinationen)) zu beheben. Leider habe ich es nur geschafft, dass alle Inhalte dieser Spalte gelöscht werden oder dass nur der erste Buchstabe gelöscht wird (dafür habe ich sogar zwei verschiedene Wege gefunden; einmal "[a-z.]" und dann noch "r sternchen."). Mein Versuch die Punkte in den Autorennamen durch Kommas zu ersetzen scheitert ebenfalls. Ich kann jetzt aber mit mutate(`Book-Author` = str_replace(`Book-Author`, ".", ",")) den ersten Buchstaben des Namens durch ein Komma ersetzen. Ich frage mich, warum dann immer der erste Buchstabe genommen wird? Liegt es daran, dass der Punkt für jedes beliebige Zeichen steht und weil ich den Bereich nicht genauer definiert habe, wird einfach immer der erste Buchstabe als Ziel des Befehls genommen? Vielleicht könnte man auswählen, dass Zeichenketten von einer bestimmten Länge entfernt werden sollen. Da ist die Frage, wie das gehen soll. 
 
-Update: Ich habe mir den nötigen Code zusammengebastellt mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\.")). Tatsächlich hat mir nur das Wissen gefehlt, wie ich dem System klarmache, dass ich mit "." auch wirklich einen Punkt meine und es nicht ein Stammplatzhalter für alle möglichen Zeichen sein soll. Da jedes Mal immer nur der erste Buchstabe entfernt wurde, der auf einem "." endet, habe ich den Datensatz dreimal mit diesem Befehl bereinigt und gehe jetzt davon aus, dass die meisten der Kürzel bereinigt wurden. Es ist keine sehr elegante Methode drei mal den Befehl zu wiederholen, aber es erfüllt meine Wünsche. Wenn es doch nur dafür sorgen könnte, dass ich nicht die ganze Zeit bis in den Morgen an Data Science rumsitze und mir den Kopf zerbreche `seufz`.
+Update: Ich habe mir den nötigen Code zusammengebastellt mutate(`Book-Author` = str_remove(`Book-Author`, "[a-z]\\.")). Tatsächlich hat mir nur das Wissen gefehlt, wie ich dem System klarmache, dass ich mit "." auch wirklich einen Punkt meine und es nicht ein Stammplatzhalter für alle möglichen Zeichen sein soll. 
 
-Nun habe ich nur noch das Problem, dass bei manchen Autor*innen die Zweitnamen ausgeschrieben wurden. Dies wird in der folgenden Warenkorbanalyse bei Patricia Daniels Cornwell sichtbar. Alle Namen bis auf den ersten Buchstaben zu kürzen wäre zu radikal und ungenau. Dann könnte RStudio nicht mehr zwischen Tom Alby und Thomas Anders unterscheiden. Nur den Zweitnamen entfernen geht auch schlecht, da ich damit auch Gefahr laufen würde die Nachnamen von Autor'innen ohne Zweitnamen zu entfernen. Das ist wohl der Punkt, an dem ich mich mit meinem Datensatz zufrieden stellen muss.
+Dabei ist mir aber aufgefallen, dass Patricia Daniels Cornwell immer noch nicht mit Patricia Cornwell zusammengepackt wird. Also habe ich mich entschieden lieber aller mittleren Namen zu entfernen.
 
 ```{r}
 subrules1 <- head(trans.rules1, n = 15, by = "lift")
@@ -181,7 +173,7 @@ ratings2 <- ratings %>%
 Hier habe ich mich dazu entschlossen nur noch Daten zu nehmen, in denen klar wird, dass de User den Autoren wirklich mochte. Dafür habe ich alle Bewertungen von 6 oder schlechter rausgeworfen.
 
 ```{r}
-all2 <- books3 %>%
+all2 <- books1 %>%
   left_join(ratings2)
 ```
 ```{r}
