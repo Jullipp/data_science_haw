@@ -1,0 +1,149 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+# Notebook zu Session 4; 08.05.2021
+
+```{r}
+library(tidyverse)
+library(e1071)
+library(caret)
+library(pROC)
+```
+
+```{r}
+library(readr)
+titanic <- read_delim("titanic.csv", ";", 
+    escape_double = FALSE, trim_ws = TRUE)
+```
+
+```{r}
+titanic %>%
+  group_by(survived) %>%
+  summarize(n = n())
+```
+
+```{r}
+(titanic.df <- titanic %>%
+  select(survived,pclass,sex,age,sibsp,parch) %>%
+   mutate(survived = as.factor(survived),
+          age = as.numeric(str_replace(age,",","."))))
+```
+
+```{r}
+titanic.df <- titanic.df %>%
+  mutate(age = as.numeric(str_replace(age,",",".")))
+```
+
+```{r}
+titanic.df <- na.omit(titanic.df)
+```
+
+```{r}
+titanic.df <- titanic.df %>%
+  mutate(sex = ifelse(sex == "female", 1, 0))
+```
+
+```{r}
+set.seed(393)
+inTrain <- createDataPartition(
+  y = titanic.df$survived,
+  p = .8,
+  list = FALSE)
+training <- titanic.df[ inTrain,]
+testing  <- titanic.df[-inTrain,]
+```
+
+```{r}
+model.svm <- svm(formula = survived ~ ., data = training, probability=TRUE)
+summary(model.svm)
+pred <- predict(model.svm, testing[,-1], probability = TRUE)
+```
+
+```{r}
+(test.results <- cbind(pred, testing))
+```
+
+```{r}
+head(attr(pred, "probabilities"))
+```
+```{r}
+confusionMatrix(pred,testing$survived)
+```
+```{r}
+library(pROC)
+pROC_obj <- roc(as.numeric(test.results$survived), as.numeric(test.results$pred),
+            smoothed = TRUE,
+            ci=TRUE, ci.alpha=0.9, stratified=FALSE,
+            plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
+            print.auc=TRUE, show.thres=TRUE)
+```
+
+# Naive Bayes
+
+```{r}
+my_training_nb <- training %>%
+  mutate(survived = as.factor(survived))%>%
+  mutate(sex = as.factor(sex))%>%
+  mutate(pclass = as.factor(pclass)) %>%
+  mutate(age = as.factor(ifelse(age < 7, "child", "adult"))) %>%
+  mutate(sibsp = as.factor(sibsp)) %>%
+  mutate(parch = as.factor(parch))
+model_nb <- naiveBayes(survived ~ ., data = my_training_nb)
+model_nb
+```
+
+```{r}
+my_testing_nb <- testing %>%
+  mutate(sex = as.factor(sex)) %>%
+  mutate(pclass = as.factor(pclass))%>%
+  mutate(age = as.factor(ifelse(age < 7, "child", "adult")))%>%
+  mutate(sibsp = as.factor(sibsp)) %>%
+  mutate(parch = as.factor(parch))
+pred_nb <- predict(model_nb, my_testing_nb)
+table(pred, my_testing_nb$survived)
+```
+
+
+```{r}
+(test.results_nb <- cbind(pred_nb, my_testing_nb))
+```
+
+```{r}
+test.results_nb <- test.results_nb %>%
+  mutate(pred = as.numeric(pred_nb))
+pROC_obj_nb <- roc(as.numeric(as.factor(test.results_nb$survived)), test.results_nb$pred,
+            smoothed = TRUE,
+            ci=TRUE, ci.alpha=0.9, stratified=FALSE,
+            plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
+            print.auc=TRUE, show.thres=TRUE)
+
+```
+# Decision Tree
+
+```{r}
+library(rpart)
+library(rpart.plot)
+tree<- rpart(survived~., data = training, method = 'class')
+rpart.plot(tree)
+```
+```{r}
+dt_results <- predict(tree, testing[,-1], type = 'prob')
+head(model.results.dt <- cbind(testing,dt_results),500)
+```
+```{r}
+test.results_dt <- test.results %>%
+  mutate(pred = ifelse(pred >= 0.5,1,0))
+table(test.results_dt$pred, testing$survived)
+```
+
+
+```{r}
+pROC_obj_dt <- roc(model.results.dt$survived,model.results.dt$`1`,
+            smoothed = TRUE,
+            # arguments for ci
+            ci=TRUE, ci.alpha=0.9, stratified=FALSE,
+            # arguments for plot
+            plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
+            print.auc=TRUE, show.thres=TRUE)
+```
