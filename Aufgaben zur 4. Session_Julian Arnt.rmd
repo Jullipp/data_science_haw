@@ -2,20 +2,24 @@
 title: "R Notebook"
 output: html_notebook
 ---
-# Notebook zu Session 4; 08.05.2021
+## Notebook zu Session 4
 
+# Libraries und Daten
 ```{r}
 library(tidyverse)
 library(e1071)
 library(caret)
 library(pROC)
+library(rpart)
+library(rpart.plot)
 ```
 
 ```{r}
-library(readr)
 titanic <- read_delim("titanic.csv", ";", 
     escape_double = FALSE, trim_ws = TRUE)
 ```
+
+# Class Imbalance Check
 
 ```{r}
 titanic %>%
@@ -23,25 +27,19 @@ titanic %>%
   summarize(n = n())
 ```
 
+# SVM
+
 ```{r}
 (titanic.df <- titanic %>%
   select(survived,pclass,sex,age,sibsp,parch) %>%
-   mutate(survived = as.factor(survived),
-          age = as.numeric(str_replace(age,",","."))))
+   mutate(survived = as.factor(survived)))
 ```
 
 ```{r}
 titanic.df <- titanic.df %>%
-  mutate(age = as.numeric(str_replace(age,",",".")))
-```
-
-```{r}
-titanic.df <- na.omit(titanic.df)
-```
-
-```{r}
-titanic.df <- titanic.df %>%
-  mutate(sex = ifelse(sex == "female", 1, 0))
+  mutate(age = as.numeric(str_replace(age,",","."),
+         sex = ifelse(sex == "female", 1, 0))) %>%
+  na.omit(titanic.df)
 ```
 
 ```{r}
@@ -63,15 +61,16 @@ pred <- predict(model.svm, testing[,-1], probability = TRUE)
 ```{r}
 (test.results <- cbind(pred, testing))
 ```
-
 ```{r}
 head(attr(pred, "probabilities"))
 ```
+
 ```{r}
 confusionMatrix(pred,testing$survived)
 ```
+
+
 ```{r}
-library(pROC)
 pROC_obj <- roc(as.numeric(test.results$survived), as.numeric(test.results$pred),
             smoothed = TRUE,
             ci=TRUE, ci.alpha=0.9, stratified=FALSE,
@@ -79,40 +78,41 @@ pROC_obj <- roc(as.numeric(test.results$survived), as.numeric(test.results$pred)
             print.auc=TRUE, show.thres=TRUE)
 ```
 
+
 # Naive Bayes
 
 ```{r}
-my_training_nb <- training %>%
+my_training <- training %>%
   mutate(survived = as.factor(survived))%>%
   mutate(sex = as.factor(sex))%>%
   mutate(pclass = as.factor(pclass)) %>%
-  mutate(age = as.factor(ifelse(age < 7, "child", "adult"))) %>%
   mutate(sibsp = as.factor(sibsp)) %>%
-  mutate(parch = as.factor(parch))
-model_nb <- naiveBayes(survived ~ ., data = my_training_nb)
-model_nb
+  mutate(parch = as.factor(parch)) %>%
+  mutate(age = as.factor(ifelse(age < 16, "child", "adult")))
+model <- naiveBayes(survived ~ ., data = my_training)
+model
 ```
 
 ```{r}
-my_testing_nb <- testing %>%
+my_testing <- testing %>%
   mutate(sex = as.factor(sex)) %>%
   mutate(pclass = as.factor(pclass))%>%
-  mutate(age = as.factor(ifelse(age < 7, "child", "adult")))%>%
+  mutate(age = as.factor(ifelse(age < 16, "child", "adult")))%>%
   mutate(sibsp = as.factor(sibsp)) %>%
   mutate(parch = as.factor(parch))
-pred_nb <- predict(model_nb, my_testing_nb)
-table(pred, my_testing_nb$survived)
+pred <- predict(model, my_testing)
+table(pred, my_testing$survived)
 ```
 
 
 ```{r}
-(test.results_nb <- cbind(pred_nb, my_testing_nb))
+(test.results <- cbind(pred, my_testing))
 ```
 
 ```{r}
-test.results_nb <- test.results_nb %>%
-  mutate(pred = as.numeric(pred_nb))
-pROC_obj_nb <- roc(as.numeric(as.factor(test.results_nb$survived)), test.results_nb$pred,
+test.results <- test.results %>%
+  mutate(pred = as.numeric(pred))
+pROC_obj <- roc(as.numeric(as.factor(test.results$survived)), test.results$pred,
             smoothed = TRUE,
             ci=TRUE, ci.alpha=0.9, stratified=FALSE,
             plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
@@ -122,8 +122,6 @@ pROC_obj_nb <- roc(as.numeric(as.factor(test.results_nb$survived)), test.results
 # Decision Tree
 
 ```{r}
-library(rpart)
-library(rpart.plot)
 tree<- rpart(survived~., data = training, method = 'class')
 rpart.plot(tree)
 ```
@@ -132,18 +130,20 @@ dt_results <- predict(tree, testing[,-1], type = 'prob')
 head(model.results.dt <- cbind(testing,dt_results),500)
 ```
 ```{r}
-test.results_dt <- test.results %>%
-  mutate(pred = ifelse(pred >= 0.5,1,0))
+test.results_dt <- test.results 
 table(test.results_dt$pred, testing$survived)
 ```
 
 
 ```{r}
-pROC_obj_dt <- roc(model.results.dt$survived,model.results.dt$`1`,
+pROC_obj <- roc(model.results.dt$survived,model.results.dt$`1`,
             smoothed = TRUE,
-            # arguments for ci
             ci=TRUE, ci.alpha=0.9, stratified=FALSE,
-            # arguments for plot
             plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
             print.auc=TRUE, show.thres=TRUE)
 ```
+
+# Was sind die Unterschiede in der Performance der Algorithmen und wie lassen sie sich erklären?
+Der Descision Tree hat eine Performance von 0.87. Der SVM hat eine Performance von 0.852. Der Naive Bayes hat eine Performance von 0.802.
+
+Die hohe Performance kommt vermutlich daher, dass die Datenpunkte, durch die die Support-Vektoren gehen, weit voneinander getrennt sind. Somit kann der Algorithmus leicter Entscheidungen treffen, da die Trennung zwischen den Möglichkeiten survived oder not survived eindeutiger ist. Der Naive Bayes Algorithmus hat am schlechtesten abgeschnitten, was vermutlich daran lag, 
