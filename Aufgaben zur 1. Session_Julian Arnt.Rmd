@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(readr)
+books <- read_delim("BX-Books.csv", 
+    ";", escape_backslash = TRUE, escape_double = FALSE, 
+    trim_ws = TRUE)
+
+```
+
+```{r}
+library(readr)
+ratings <- read_delim("BX-Book-Ratings.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+```
+```{r}
+ratings <- filter(ratings, `Book-Rating` >= 1)
+  
+```
+
+```{r}
+books <- books %>%
+  select(ISBN, `Year-Of-Publication`, `Book-Author`, `Book-Title`, Publisher) %>%
+  mutate(str_to_lower(`Book-Author`), str_replace(`Book-Author`, "ç", "c")) 
+```
+
+
+```{r}
+books_w_ratings <-books %>%
+  left_join(ratings)
+```
+Ich fand es sehr schwer zu definieren, was ein Buch als "bestes Buch" ausweist. Nach mehrfachen Überlegungen habe ich mich dazu entschieden, nur Bewertungen in meine Suche nach dem "besten Buch" einfließen zu lassen, die einen Wert von 8 oder besser haben. Ich habe den Wert drei gewählt, da der Durchschnittswert aller Bewertungen 7,627 ist (Wert ist unten berechnet). Somit wollte ich nur alle Bewertungen einfließen lassen, die besser als der Durchschnitt ist. Zwar fallen damit auch alle Bewertungen weg, die die Druchschnitte der einzelnen Bücher nach unten ziehen könnten, allerding benötige ich ja ein Kriterium, welches ein Buch zum "besten" macht. 
+
+Eine Alternative, zum Rating als Kriterium, wäre es gewesen, wenn ich stattdessen nach der Anzahl der Bewertungen gehe. Dann hätte ich allerdings festlegen müssen, ab welcher Anzahl an Bewertungen ein Buch für mich nicht mehr gut genug ist. Das wäre mir deutlich schwieriger gefallen, da insgesamt 278,858 User abstimmen konnten. Soll ich die Hälfte nehmen? Dann müssten mindestens 150,000 User eine Bewertung bei einem Buch abgegeben haben. Das geht nicht, da das Buch "Wild Animus" die meisten Bewertungen erhalten hat. Das sind gerade mal 2505 Bewertungen. Also eignet sich die Hälfte nicht als Maßstab. Weitere "Grenzen", die ich als Maßstab fetslegen könnte, sind mir nicht eingefallen.
+```{r}
+books_w_good_ratings <- filter(books_w_ratings, `Book-Rating` >= 8) 
+```
+ 
+```{r}
+books_w_good_ratings %>%
+  group_by(`Book-Title`) %>%
+  summarise(`Book-Rating` = mean(`Book-Rating`, na.rm = TRUE),
+            anzahl_bewertungen = n()) %>%
+  arrange(desc(anzahl_bewertungen))
+```
+Nach dieser Tabelle ist das Buch "The Lovely Bones: A Novel" das beste Buch. Zwar hat es einen leicht schlechteren Durchschnitt als der zweite Platz, allerdings auch knapp 135 Bewertungen mehr. Hier finde ich es auch wichtig nach der Anzahl der Bewertungen zu gehen, da diese wiedergeben, wie viele das Medium kennen bzw. es überhaupt gelesen haben. Dies ist ein weiteres Kriterium, da es statistisch mehr Sinn ergibt, etwas als das "beste Buch" zu betiteln, wenn mehr User es positiv bewertet haben. 
+
+Im Vergleich dazu ergibt es weniger Sinn, ein Buch als das "beste Buch" zu bezeichnen, wenn nur eine Person es bewertet hat, dafür aber mit einer 10. Dann findet diese Person es zwar sehr gut, allerdings lässt es sich statistisch nicht halten. Wenn aber 700 User ein anderes Buch mit durchschnittlich 8,221 bewerten, dann haben deren Stimmen natürlich mehr Gewicht.   
+
+```{r}
+mean(books_w_ratings$`Book-Rating`, na.rm = TRUE)
+```
+
+
+```{r}
+books_w_good_author <- books_w_ratings %>%
+  group_by(`Book-Author`, `Book-Title`, `Book-Rating`) %>%
+  summarise(`Book-Rating` = mean(`Book-Rating`, na.rm = TRUE),
+            anzahl_rating = n()) %>%
+  arrange(desc(anzahl_rating))
+```
+```{r}
+books_w_good_author %>%
+  group_by(`Book-Author`) %>%
+  summarise(anzahl_buecher = n(),
+            `Book-Rating` = mean(`Book-Rating`, na.rm = TRUE)) %>%
+  arrange(desc(anzahl_buecher))
+```
+Für die Beurteilung, wer denn der/die beste Verfasser*in ist, habe ich mich entschieden mein Kriterium, dass nur Bewertungen gezählt werden, die über dem Durchschnitt liegen, nicht mehr anzuwenden. Diese Entscheidung habe ich getroffen, da ich zuvor Bücher, welche sehr schlecht bewertet wurden, aus meiner Tabelle entfernen wollte. Hier ist dies nicht benötigt, da ich nicht nur ein einzelnes Buch bewerte, sondern mehrere Bücher aufeinmal bzw. ich bewerte eine'n Verfasser'in durch die Bewertungen ihrer Bücher. Somit können auch Bücher, welche sehr schlecht bewertet wurden und durch mein ursprüngliches Kriterium herausgefiltert wurden, von Bedeutung sein. 
+
+Nach der Berechnung ist Stephen King oder Agatha Christie der/die beste Verfasser'in. Zwar hat Stephen King 122 Bücher mehr, aber dafür hat Nora Roberts eine bessere durchschnittliche Bewertung. Nun müsste man konkret entscheiden, welches Kriterium mehr wiegt um eine entgültige Antwort liefern zu können.
+
+```{r}
+books_w_good_publisher <- books_w_ratings %>%
+  group_by(`Book-Title`, `Book-Rating`, Publisher) %>%
+  summarise(`Book-Rating` = mean(`Book-Rating`, na.rm = TRUE),
+            anzahl_bewertungen = n()) 
+```
+```{r}
+books_w_good_publisher %>%
+  group_by(Publisher) %>%
+  summarise(anzahl_publikationen = n(),
+            `Book-Rating` = mean(`Book-Rating`, na.rm = TRUE)) %>%
+  arrange(desc(anzahl_publikationen))
+```
+Um den Verlag zu finden, welcher die besten Bücher hat, habe ich zuerst den Datensatz zu bearbeitet, dass nur noch der Name des Verlages, die Buch-Titel und die Bewertungen der Bücher vorhanden sind. Diesen Datensatz habe ich dann zusammengefasst, indem  ich es nach der Anzahl der Publikationen zusammengefasst und geordnet habe. Zusätzlich habe ich noch die durchschnittliche Bewertung der einzelnen Publikationen berechnet.
+
+Nach dieser List nimmt zwar der Verlag Harlequin den ersten Platz ein, allerdings liegt das nur daran, dass dieser Verlag so viele Bücher publiziert hat. Die eigentliche durchschnittliche Bewertung ist eher schlecht. Deshalb würde ich diesen Verlag für die Entscheidungsfindung rausnehmen. Dann hätten wir zwei Verlage, die für den Platz 1 in Frage kämmen. Zwar hat der Verlag Pocket 5 mehr Publikationen, als der Verlag Ballantine Books, aber dafür hat der Verlag Ballantine Books eine leicht bessere Bewertung. Hier wäre dann wieder die Frage, welcher Wert mehr in die Wertung reinzählt. 

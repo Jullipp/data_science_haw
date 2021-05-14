@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(readr)
+books <- read_delim("BX-Books.csv", 
+    ";", escape_backslash = TRUE, escape_double = FALSE, 
+    trim_ws = TRUE)
+```
+
+```{r}
+library(readr)
+ratings <- read_delim("BX-Book-Ratings.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+```
+
+
+
+```{r}
+ books <- books %>%
+  select(ISBN, `Year-Of-Publication`, `Book-Author`, `Book-Title`, Publisher) %>%
+  mutate(`Book-Author` = str_to_lower(`Book-Author`), 
+         `Book-Author` = str_replace(`Book-Author`, "ç", "c"),
+         `Book-Author` = str_replace(`Book-Author`, "ñ", "n"),
+         `Book-Author` = str_replace(`Book-Author`, "é", "e"),
+         `Book-Author` = str_replace(`Book-Author`, "í", "i"),
+         `Book-Author` = str_replace(`Book-Author`, "ó", "o"),
+         `Book-Author` = str_replace(`Book-Author`, "ò", "o"),
+         `Book-Author` = str_replace(`Book-Author`, "ô", "o"),
+         `Book-Author` = str_replace(`Book-Author`, "ö", "oe"),
+         `Book-Author` = str_replace(`Book-Author`, "ï", "i"),
+         `Book-Author` = str_replace(`Book-Author`, "á", "a"),
+         `Book-Author` = str_replace(`Book-Author`, "à", "a"),
+         `Book-Author` = str_replace(`Book-Author`, "è", "e"),
+         `Book-Author` = str_replace(`Book-Author`, "ê", "e"),
+         `Book-Author` = str_replace(`Book-Author`, "ë", "e"),
+         `Book-Author` = str_replace(`Book-Author`, "å", "a"),
+         `Book-Author` = str_replace(`Book-Author`, "ä", "ae"),
+         `Book-Author` = str_replace(`Book-Author`, "ã", "a"),
+         `Book-Author` = str_replace(`Book-Author`, "â", "a"),
+         `Book-Author` = str_replace(`Book-Author`, "ú", "u"),
+         `Book-Author` = str_replace(`Book-Author`, "ü", "u"),
+         `Book-Title` = str_to_lower(`Book-Title`),
+         `Book-Title` = str_replace(`Book-Title`, "ç", "c"),
+         `Book-Title` = str_replace(`Book-Title`, "ñ", "n"),
+         `Book-Title` = str_replace(`Book-Title`, "é", "e"),
+         `Book-Title` = str_replace(`Book-Title`, "í", "i"),
+         `Book-Title` = str_replace(`Book-Title`, "ó", "o"),
+         `Book-Title` = str_replace(`Book-Title`, "ò", "o"),
+         `Book-Title` = str_replace(`Book-Title`, "ô", "o"),
+         `Book-Title` = str_replace(`Book-Title`, "ö", "oe"),
+         `Book-Title` = str_replace(`Book-Title`, "ï", "i"),
+         `Book-Title` = str_replace(`Book-Title`, "á", "a"),
+         `Book-Title` = str_replace(`Book-Title`, "à", "a"),
+         `Book-Title` = str_replace(`Book-Title`, "è", "e"),
+         `Book-Title` = str_replace(`Book-Title`, "ê", "e"),
+         `Book-Title` = str_replace(`Book-Title`, "ë", "e"),
+         `Book-Title` = str_replace(`Book-Title`, "å", "a"),
+         `Book-Title` = str_replace(`Book-Title`, "ä", "ae"),
+         `Book-Title` = str_replace(`Book-Title`, "ã", "a"),
+         `Book-Title` = str_replace(`Book-Title`, "â", "a"),
+         `Book-Title` = str_replace(`Book-Title`, "ú", "u"),
+         `Book-Title` = str_replace(`Book-Title`, "ü", "u"),
+         Publisher = str_to_lower(Publisher),
+         ISBN = str_extract(ISBN, "[0-9]*X*")) 
+```
+
+```{r}
+books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
+```
+
+```{r}
+"ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA"
+```
+
+#mZusammenhang Anzahl der Ratings der Bücher eines Publisher und der Anzahl der Bücher pro Publisher
+```{r}
+ratings_zsm_buecher <- books %>%
+  left_join(ratings) %>%
+  filter(`Book-Rating`>0) %>%
+  group_by(Publisher) %>%
+  mutate(anzahl_bewertungen = n()) %>%
+  select(Publisher, `Book-Title`, anzahl_bewertungen) %>%
+  unique() %>%
+  mutate(anzahl_buecher = n()) %>% 
+  ungroup() %>%
+  select(anzahl_buecher, anzahl_bewertungen)
+```
+```{r}
+cor.test(ratings_zsm_buecher$anzahl_buecher, ratings_zsm_buecher$anzahl_bewertungen)
+```
+Da der Korrelationswert > 0,8 besteht eine starke Korrelation zwischen der Anzahl der Bewertungen der Bücher eines Publsihers und die Anzahl der Bücher pro Publisher 
+
+```{r}
+plot(ratings_zsm_buecher)
+```
+# Vorhersage bei Anzahl der Bücher pro Publisher und die Anzahl der Bewertungen der Bücher eines Publisher
+```{r}
+fit <- lm(ratings_zsm_buecher$anzahl_bewertungen ~ ratings_zsm_buecher$anzahl_buecher)
+```
+
+```{r}
+plot(ratings_zsm_buecher)
+abline(fit)
+```
+
+
+```{r}
+summary(fit)
+```
+Da R-squared bei 0,72 liegt, kann die Varianz zu 72% durch die unabhängige Variabel erklärt werden. Lediglich die ungleichmäßige Verteilung bei den Residuals lässt einen leichten Zweifel an den Vorhersagen des Modells entstehen.
+
+# Korrelation zwischen Alter des Buches und die Anzahl an Bewertungen
+```{r}
+alter_zsm_rating <-  books %>%
+  left_join(ratings) %>%
+  filter(`Book-Rating`>0,
+         `Year-Of-Publication`<2020) %>%
+  group_by(`Year-Of-Publication`) %>%
+  select(`Book-Title`) %>%
+  unique() %>%
+  mutate(anzahl_ratings = n()) %>%
+  ungroup() %>%
+  select(`Year-Of-Publication`,anzahl_ratings)
+```
+
+```{r}
+cor.test(alter_zsm_rating$`Year-Of-Publication`,alter_zsm_rating$anzahl_ratings)
+```
+
+```{r}
+plot(alter_zsm_rating)
+```
+Zwar besteht anscheinen ein starker Zusammenhang zwischen dem Alter eines Buches und die Anzahl der Bewertungen, die es bekommt, allerdings sieht man im Plot sehr gut, dass erst Bücher ab einem Publikationsdatum von ca 1970 tatsächlich mehr Bewertungen erhalten. Diese Entwicklung fällt ab 2007 drastisch ab.
+
+# Vorhersage Alter des Buches und die Anzahl der Bewertungen des Buches
+```{r}
+fit2 <- lm(alter_zsm_rating$`Year-Of-Publication` ~ alter_zsm_rating$anzahl_ratings)
+```
+
+```{r}
+plot(alter_zsm_rating)
+abline(fit2)
+```
+```{r}
+summary(fit2)
+```
+In diesem Beispiel lässt R-squared eine ähnliche Aussage wie beim vorherigen Beispiel zu. In diesem Beispiel aber ist die Verteilung deutlich gleichmäßiger. Zumindest zwischen dem 1. und 3. Quartal. Lediglich das Minimun ist deutlich weiter vom Median entfernt als das Maximum. Dies lässt sich vielleicht durch die wenigen Bücher erklären, welche vor 1400 publiziert wurden.
