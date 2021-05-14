@@ -89,8 +89,8 @@ my_training <- training %>%
   mutate(sibsp = as.factor(sibsp)) %>%
   mutate(parch = as.factor(parch)) %>%
   mutate(age = as.factor(ifelse(age < 16, "child", "adult")))
-model <- naiveBayes(survived ~ ., data = my_training)
-model
+model_nb <- naiveBayes(survived ~ ., data = my_training)
+model_nb
 ```
 
 ```{r}
@@ -100,7 +100,7 @@ my_testing <- testing %>%
   mutate(age = as.factor(ifelse(age < 16, "child", "adult")))%>%
   mutate(sibsp = as.factor(sibsp)) %>%
   mutate(parch = as.factor(parch))
-pred <- predict(model, my_testing)
+pred <- predict(model_nb, my_testing)
 table(pred, my_testing$survived)
 ```
 
@@ -130,9 +130,12 @@ dt_results <- predict(tree, testing[,-1], type = 'prob')
 head(model.results.dt <- cbind(testing,dt_results),500)
 ```
 ```{r}
-table(test.results$pred, testing$survived)
+test.results_dt <- test.results %>%
+  mutate(pred = as.numeric(pred),
+         pred = ifelse(pred>=0.5,1,0))
+table(test.results_dt$pred, testing$survived)
 ```
-
+Irgendwie kriege ich hier keine Tabelle hin, die mir auch die Predictions für die Überlebten anzeigt. Ich habe es mit mutate(pred = ifelse(pred<0.5,0)) versucht, dort wird mir aber das kleiner als Zeichen als Fehler angezeigt. Ihre Bepsiellösung hat aber auch nur eine Zeile in dieser Tabelle.
 
 ```{r}
 pROC_obj_df <- roc(model.results.dt$survived,model.results.dt$`1`,
@@ -143,10 +146,10 @@ pROC_obj_df <- roc(model.results.dt$survived,model.results.dt$`1`,
 ```
 
 # Was sind die Unterschiede in der Performance der Algorithmen und wie lassen sie sich erklären?
-Der Descision Tree hat eine Performance von 0.87. Der SVM hat eine Performance von 0.852. Der Naive Bayes hat eine Performance von 0.802.
+Der Descision Tree hat eine Performance von 0.87. Bei diesem Algorithmus kann ich keine Fehlermenge der Predictions nennen, da ich keine gescheite Tabelle hinbekomme. Der SVM hat eine Performance von 0.852 mit 28 falschen Predictions. Der Naive Bayes hat eine Performance von 0.802 und 38 falsche Predictions. Interessant hierbei ist, dass bei beiden Algorithmen die Differenz zwischen den Fehlschätzungen der Lebenden und Toten 10 ist. Gibt es 10 Passagiere, die von den Daten her eigentlich tod sein sollten, aber extremes Glück hatten?
 
-Die hohe Performance des SVM-Algorithmuses kommt vermutlich daher, dass die Datenpunkte, durch die die Support-Vektoren gehen, weit voneinander getrennt sind. Somit kann der Algorithmus leicter Entscheidungen treffen, da die Trennung zwischen dem Tariningsdatensatz und dem Testdatensatz eindeutiger ist.
+Die hohe Performance des SVM-Algorithmuses kommt vermutlich daher, dass die Datenpunkte, durch die die Support-Vektoren gehen, weit voneinander getrennt sind. Der Algorithmus kan leichter bzw. besser Entscheidungen treffen, da die Trennung zwischen dem Tariningsdatensatz und dem Testdatensatz eindeutiger ist.
 
-Der Naive Bayes Algorithmus hat am schlechtesten abgeschnitten, was vielleicht daran liegt, dass der Naive Bayes Algorithmus davon ausgeht, dass die Variabeln nicht miteinander zu tun haben. Allerdings haben die Variabeln siblsp und parch doch etwas miteinander zu tun, da siblsp zum Beispiel aussagt, wie viele Geschwister die Person auf dem Schiff hat und die Variable parch gibt darüber Auskunft, wie viele Kinder diese Person auf dem Schiff hat. Wenn eine Person 3 Geschwister auf dem Schiff hat, dann haben die Eltern dort wahrscheinlich 4 Kinder unter parch stehen. Dieser Zusammenhang könnte eine Erklärung für die niedrige Performance sein. Update: Ein Entfernen der Variabel parch aus den Berechnungen sorgt NICHT für eine Änderung in der Performance.  
+Der Naive Bayes Algorithmus hat am schlechtesten abgeschnitten, was vielleicht daran liegt, dass der Naive Bayes Algorithmus davon ausgeht, dass die Variabeln nicht miteinander zu tun haben. Allerdings haben die Variabeln siblsp und parch doch etwas miteinander zu tun, da siblsp zum Beispiel aussagt, wie viele Geschwister die Person auf dem Schiff hat und die Variable parch gibt darüber Auskunft, wie viele Kinder diese Person auf dem Schiff hat. Wenn eine Person 3 Geschwister auf dem Schiff hat, dann haben die Eltern dort wahrscheinlich 4 Kinder unter parch stehen. Dieser Zusammenhang könnte eine Erklärung für die niedrige Performance sein. Update: Ein Entfernen der Variabel parch aus den Berechnungen sorgt NICHT für eine Änderung in der Performance. Eine weitere Erklärung wäre, dass der Naive Bayes
 
 Beim Descicion Tree besteht die Gefahr des Overfittings, was ich bei diesem Beispiel nicht vermute, da eine sehr große Ähnlichkeit zwischen dem Trainings- und Testdatensatz die Vorraussetzung dafür wäre. Dies würde im Konflikt mit meiner oben erstellten Theorie, dass die Support-Vektoren beim SVM-Algorithmus aufgrund einer klaren Trennung der beiden Datensätze weit voneinander entfernt sind, stehen. Ansonsten wäre eine mögliche Erklärung für den hohen Performance Wert, dass beim DT die Features für den Testdatensatz selbst gewählt werden. Das halte ich aber für unwahrscheinlich, da der DT im Vergleich mit den anderen Algorithmen nur die Variable parch nicht beachtet. Bei meinem Versuch bei NB, wo ich parch ebenfalls rausgenommen habe, hat das zu keiner Änderung, geschweige den Steigerung beim Performane Wert geführt.  
