@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+## Aufgaben zu Session 5
+```{r}
+library(tidyverse)
+library(caret)
+library(cluster)
+```
+
+```{r}
+library(readr)
+all <- read_csv("gesamter-Datensatz.csv")
+```
+```{r}
+all <- na.omit(all)
+```
+
+
+```{r}
+all2 <- all[c(1:300),] %>%
+  select(ISBN, `User-ID`, `Year-Of-Publication`, `Book-Rating`, Age) %>%
+  mutate(ISBN = as.numeric(ISBN))
+```
+```{r}
+all3 <- all2[,-1:-2]
+```
+
+```{r}
+(all.dist <- dist(scale(all3), method="euclidean"))
+```
+
+```{r}
+all.hc <- hclust(all.dist, method = "complete")
+plot(all.hc)
+```
+
+```{r}
+all.scaled <- as.data.frame(scale(all3))
+```
+
+```{r}
+wss <- (nrow(all.scaled)-1)*sum(apply(all.scaled,2,var))
+  for (i in 2:10) wss[i] <- sum(kmeans(all.scaled,
+                                       centers=i)$withinss)
+plot(1:10, wss, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+```
+```{r}
+k.means.fit <- kmeans(all.scaled, 2)
+```
+```{r}
+clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
+labels=4, lines=0, main="K-means cluster plot")
+```
+
+
+```{r}
+table(all2$ISBN, k.means.fit$cluster)
+```
+
