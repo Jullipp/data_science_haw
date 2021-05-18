@@ -8,24 +8,139 @@ library(tidyverse)
 library(caret)
 library(cluster)
 ```
-
 ```{r}
 library(readr)
-all <- read_csv("gesamter-Datensatz.csv")
+users <- read_delim("BX-Users.csv", ";", 
+    escape_double = FALSE, trim_ws = TRUE)
 ```
+```{r}
+library(readr)
+ratings <- read_delim("BX-Book-Ratings.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+```
+```{r}
+library(readr)
+books <- read_delim("BX-Books.csv", ";", 
+    escape_double = FALSE, trim_ws = TRUE)
+```
+
+```{r}
+books$`Year-Of-Publication`[books$`Year-Of-Publication` == 0] <-NA
+```
+
+```{r}
+books1 <- books %>%
+  select(ISBN, `Year-Of-Publication`, `Book-Author`, `Book-Title`, Publisher) %>%
+  mutate(`Book-Author` = str_to_lower(`Book-Author`), 
+         `Book-Author` = str_replace_all(`Book-Author`, "ç", "c"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ñ", "n"),
+         `Book-Author` = str_replace_all(`Book-Author`, "é", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "í", "i"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ó", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ò", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ô", "o"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ö", "oe"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ï", "i"),
+         `Book-Author` = str_replace_all(`Book-Author`, "á", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "à", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "è", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ê", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ë", "e"),
+         `Book-Author` = str_replace_all(`Book-Author`, "å", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ä", "ae"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ã", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "â", "a"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ú", "u"),
+         `Book-Author` = str_replace_all(`Book-Author`, "ü", "u"),
+         `Book-Title` = str_to_lower(`Book-Title`),
+         `Book-Title` = str_replace_all(`Book-Title`, "ç", "c"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ñ", "n"),
+         `Book-Title` = str_replace_all(`Book-Title`, "é", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "í", "i"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ó", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ò", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ô", "o"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ö", "oe"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ï", "i"),
+         `Book-Title` = str_replace_all(`Book-Title`, "á", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "à", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "è", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ê", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ë", "e"),
+         `Book-Title` = str_replace_all(`Book-Title`, "å", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ä", "ae"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ã", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "â", "a"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ú", "u"),
+         `Book-Title` = str_replace_all(`Book-Title`, "ü", "u"),
+         `Book-Author` = str_replace_all(`Book-Author`, " .* ", " "),
+         Publisher = str_to_lower(Publisher),
+         ISBN = str_extract(ISBN, "[0-9]*X*")) 
+```
+
+
+```{r}
+ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
+```
+
+
+```{r}
+users <- users %>%
+  mutate(Location = str_remove_all(Location, ".*,"),
+         Age = as.numeric(Age))
+```
+
+```{r}
+books_w_ratings <- books1 %>%
+  left_join(ratings)
+```
+
+```{r}
+all <- books_w_ratings %>%
+  left_join(users)
+```
+
+
 ```{r}
 all <- na.omit(all)
 ```
 
 
+
 ```{r}
-all2 <- all[c(1:300),] %>%
-  select(ISBN, `User-ID`, `Year-Of-Publication`, `Book-Rating`, Age) %>%
-  mutate(ISBN = as.numeric(ISBN))
+all2 <- all[c(1:200),] %>%
+  select(`Book-Title`, `User-ID`, Location, `Book-Rating`, Age) 
 ```
 ```{r}
-all3 <- all2[,-1:-2]
+all2$usa <- ifelse(all2$Location == "usa", 1, 0) 
+all2$canada <- ifelse(all2$Location == "canada", 1, 0) 
+all2$germany <- ifelse(all2$Location == "germany", 1, 0) 
+all2$spain <- ifelse(all2$Location == "spain", 1, 0) 
+all2$united_kingdom <- ifelse(all2$Location == "united kingdom", 1, 0) 
+all2$australia <- ifelse(all2$Location == "australia", 1, 0) 
+all2$netherlands <- ifelse(all2$Location == "netherlands", 1, 0) 
+all2$portugal <- ifelse(all2$Location == "portugal", 1, 0) 
+all2$brazil <- ifelse(all2$Location == "brazil", 1, 0) 
+all2$costa_rica <- ifelse(all2$Location == "costa rica", 1, 0) 
+all2$france <- ifelse(all2$Location == "france", 1, 0)
+all2$indonesia <- ifelse(all2$Location == "indonesia", 1, 0) 
+all2$malaysia <- ifelse(all2$Location == "malaysia", 1, 0) 
+all2$malaysia <- ifelse(all2$Location == "malaysia", 1, 0)
 ```
+
+
+```{r}
+all1 <- all2 %>%
+  select(Location) %>%
+  group_by(Location) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+```{r}
+all3 <- all2[,-1:-3]
+```
+
 
 ```{r}
 (all.dist <- dist(scale(all3), method="euclidean"))
@@ -48,7 +163,17 @@ plot(1:10, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
 ```
 ```{r}
-k.means.fit <- kmeans(all.scaled, 2)
+k.means.fit <- kmeans(all.scaled, 3)
+```
+```{r}
+clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
+labels=4, lines=0, main="K-means cluster plot")
+```
+```{r}
+table(all2$`Book-Title`, k.means.fit$cluster)
+```
+```{r}
+k.means.fit <- kmeans(all.scaled, 6)
 ```
 ```{r}
 clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
@@ -57,6 +182,6 @@ labels=4, lines=0, main="K-means cluster plot")
 
 
 ```{r}
-table(all2$ISBN, k.means.fit$cluster)
+table(all2$`Book-Title`, k.means.fit$cluster)
 ```
 
