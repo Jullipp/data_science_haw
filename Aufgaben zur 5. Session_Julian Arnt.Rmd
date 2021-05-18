@@ -84,10 +84,14 @@ ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
 ```
 
 
+
 ```{r}
 users <- users %>%
   mutate(Location = str_remove_all(Location, ".*,"),
          Age = as.numeric(Age))
+```
+```{r}
+users$Location[users$Location == ""] <- NA
 ```
 
 ```{r}
@@ -111,31 +115,24 @@ all <- na.omit(all)
 all2 <- all[c(1:200),] %>%
   select(`Book-Title`, `User-ID`, Location, `Book-Rating`, Age) 
 ```
-```{r}
-all2$usa <- ifelse(all2$Location == "usa", 1, 0) 
-all2$canada <- ifelse(all2$Location == "canada", 1, 0) 
-all2$germany <- ifelse(all2$Location == "germany", 1, 0) 
-all2$spain <- ifelse(all2$Location == "spain", 1, 0) 
-all2$united_kingdom <- ifelse(all2$Location == "united kingdom", 1, 0) 
-all2$australia <- ifelse(all2$Location == "australia", 1, 0) 
-all2$netherlands <- ifelse(all2$Location == "netherlands", 1, 0) 
-all2$portugal <- ifelse(all2$Location == "portugal", 1, 0) 
-all2$brazil <- ifelse(all2$Location == "brazil", 1, 0) 
-all2$costa_rica <- ifelse(all2$Location == "costa rica", 1, 0) 
-all2$france <- ifelse(all2$Location == "france", 1, 0)
-all2$indonesia <- ifelse(all2$Location == "indonesia", 1, 0) 
-all2$malaysia <- ifelse(all2$Location == "malaysia", 1, 0) 
-all2$malaysia <- ifelse(all2$Location == "malaysia", 1, 0)
-```
-
 
 ```{r}
-all1 <- all2 %>%
-  select(Location) %>%
-  group_by(Location) %>%
-  summarise(n = n()) %>%
-  arrange(desc(n))
+all2$usa <- ifelse(all2$Location == " usa", 1, 0)  
+all2$canada <- ifelse(all2$Location == " canada", 1, 0) 
+all2$germany <- ifelse(all2$Location == " germany", 1, 0) 
+all2$france <- ifelse(all2$Location == " france", 1, 0) 
+all2$spain <- ifelse(all2$Location == " spain", 1, 0) 
+all2$united_kingdom <- ifelse(all2$Location == " united kingdom", 1, 0) 
+all2$australia <- ifelse(all2$Location == " australia", 1, 0) 
+all2$netherlands <- ifelse(all2$Location == " netherlands", 1, 0) 
+all2$portugal <- ifelse(all2$Location == " portugal", 1, 0) 
+all2$brazil <- ifelse(all2$Location == " brazil", 1, 0) 
+all2$costa_rica <- ifelse(all2$Location == " costa rica", 1, 0) 
+all2$india <- ifelse(all2$Location == " india", 1, 0) 
+all2$indonesia <- ifelse(all2$Location == " indonesia", 1, 0) 
+all2$malaysia <- ifelse(all2$Location == " malaysia", 1, 0)  
 ```
+
 
 ```{r}
 all3 <- all2[,-1:-3]
