@@ -160,7 +160,7 @@ plot(1:10, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
 ```
 ```{r}
-k.means.fit <- kmeans(all.scaled, 3)
+k.means.fit <- kmeans(all.scaled, 2)
 ```
 ```{r}
 clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
@@ -170,7 +170,7 @@ labels=4, lines=0, main="K-means cluster plot")
 table(all2$`Book-Title`, k.means.fit$cluster)
 ```
 ```{r}
-k.means.fit <- kmeans(all.scaled, 6)
+k.means.fit <- kmeans(all.scaled, 4)
 ```
 ```{r}
 clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
