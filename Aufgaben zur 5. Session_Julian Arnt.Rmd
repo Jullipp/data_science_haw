@@ -3,6 +3,9 @@ title: "R Notebook"
 output: html_notebook
 ---
 ## Aufgaben zu Session 5
+
+Der Grund für 2 Lösungen liegt daran, dass ich bei der 1. Lösung aus Buchtiteln Data Dummies erstellt habe, weshalb k sich die ganze Zeit ändert. Bei der 2. Lösung habe ich dann nur das Alter der User und die von ihnen abgegebenen Bewertungen in das Clustering einfließen lassen. Das hat schon deutlich besser geklappt. Vielleicht sogar schon zu gut, da dabei vermutlich zu wenige Variabeln verwendet werden, um ein gutes Ergebnis zu erbringen.
+# Lösung 1
 ```{r}
 library(tidyverse)
 library(caret)
@@ -88,7 +91,9 @@ ratings$`Book-Rating`[ratings$`Book-Rating` ==  0] <- NA
 ```{r}
 users <- users %>%
   mutate(Location = str_remove_all(Location, ".*,"),
-         Age = as.numeric(Age))
+         Age = as.numeric(Age)) %>%
+  filter(Age < 100,
+         Age > 10)
 ```
 ```{r}
 users$Location[users$Location == ""] <- NA
@@ -109,6 +114,9 @@ all <- books_w_ratings %>%
 all <- na.omit(all)
 ```
 
+```{r}
+all_300 <- all[c(1:300),]
+```
 
 
 ```{r}
@@ -148,8 +156,17 @@ all3 <- all2[,-1:-2]
 ```{r}
 all.hc <- hclust(all.dist, method = "complete")
 plot(all.hc)
+groups <- cutree(all.hc, k=5)
+rect.hclust(all.hc, k=5, border = "red")
 ```
-
+```{r}
+(test <- all2) %>%
+ mutate(cluster = groups) %>%
+ select(`Book-Title`, `User-ID`, cluster) %>%
+ left_join(all_300) %>%
+ arrange(desc(groups))
+```
+Wie an dem Dendrogram schon erkennbar, nimmt eine Gruppe locker 90% der User ein und damit ist einfach kein gutes Clustering gelungen. 
 ```{r}
 all.scaled <- as.data.frame(scale(all3))
 ```
@@ -161,24 +178,86 @@ wss <- (nrow(all.scaled)-1)*sum(apply(all.scaled,2,var))
 plot(1:10, wss, type="b", xlab="Number of Clusters",
      ylab="Within groups sum of squares")
 ```
+Wie oben erklärt, ändert sich K bei jedem Durchlauf. Ich weiß leider nicht, weshalb die Data Dummies (ohne die das Problem nicht entsteht) oder etwas, was für ihre Entstehung notwendig ist, diesen Effekt hervorrufen. Alleine deswegen würde ich das Clustering für nicht sinvoll erklären.
 ```{r}
-k.means.fit <- kmeans(all.scaled, 5)
+k.means.fit <- kmeans(all.scaled, 3)
 ```
 ```{r}
 clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
 labels=4, lines=0, main="K-means cluster plot")
 ```
+Der Anteil der Variabeln, die durch die beiden Komponenten erklärt werden können, liegt bei 24%. Das ist ein sehr geringer Wert, der sich durch die größtenteils binären Daten in vielen Spalten erklären lässt. Ein weiteres Indiz, dass dieses Clustering sinnlos ist
 ```{r}
 table(all2$`Book-Title`, k.means.fit$cluster)
 ```
 
-```{r}
-clusplot(all3, k.means.fit$cluster, color=TRUE, shade=TRUE,
-labels=4, lines=0, main="K-means cluster plot")
-```
-
+An der Tabelle oben erkennt man, dass die Data Dummies einen zu großen Einfluss auf das Clustering haben. Durch die oben genannten Faktoren ist diese Einteilung nicht sinnvoll. Hier erscheint es zumindest so, als könnte man die User*innen nach den gelesenen Büchern clustern.
 
 ```{r}
 table(all2$Age, k.means.fit$cluster)
 ```
+# Lösung 2
+```{r}
+all_dreihundert <- all[c(1:300),]
+```
 
+
+```{r}
+all_2 <- all[c(1:300),] %>%
+  select(`Book-Title`, `User-ID`, `Book-Rating`, Age) 
+```
+
+
+```{r}
+all_3 <- all_2[,-1:-2]
+```
+
+
+```{r}
+(all.dist_1 <- dist(scale(all_3), method="euclidean"))
+```
+
+```{r}
+all.hc_1 <- hclust(all.dist_1, method = "complete")
+plot(all.hc_1)
+groups_1 <- cutree(all.hc_1, k=4)
+rect.hclust(all.hc_1, k=4, border = "red")
+```
+```{r}
+(test <- all_2) %>%
+ mutate(cluster_1 = groups_1) %>%
+ left_join(all_dreihundert) %>%
+ select(`Book-Title`, `User-ID`, cluster_1) %>%
+ arrange(desc(groups_1))
+```
+Hier ist schon eine deutlich ausgeglichenere Verteilung beim Clustering entstanden. 
+```{r}
+all.scaled_1 <- as.data.frame(scale(all_3))
+```
+
+```{r}
+wss_1 <- (nrow(all.scaled_1)-1)*sum(apply(all.scaled_1,2,var))
+  for (i in 2:10) wss_1[i] <- sum(kmeans(all.scaled_1,
+                                       centers=i)$withinss)
+plot(1:10, wss_1, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+```
+```{r}
+k.means.fit_1 <- kmeans(all.scaled_1, 3)
+```
+```{r}
+clusplot(all_3, k.means.fit_1$cluster, color=TRUE, shade=TRUE,
+labels=4, lines=0, main="K-means cluster plot")
+```
+
+Laut dem Plot-Diagram können die beiden Komponenten 100% der Variabilität erklären. Ich persönliche finde diesen Wert zu hoch und die einzelnen Datenpunkte wirken auch so, als hätte man sie ordentlich auf einzelnen Etagen aufgereiht. Allgemein wirkt das alles zu perfekt für mich, weshalb ich den Ergebnissen nicht trauen würde. Vermutlich war die Wahl der Variabeln für das Clustering zu unpräzise, weshalb die Ergebnisse verfälscht oder verzogen wurden.
+
+```{r}
+table(all_2$`Book-Title`, k.means.fit_1$cluster)
+```
+
+```{r}
+table(all_2$Age, k.means.fit_1$cluster)
+```
+
+Die oberen Tabellen stimmen der Hypothese nur teilweise zu. Zwar kann man sagen, dass bei mannchen Gruppen Bücher auftauchen, die in den anderen Gruppen nicht auftauchen, aber dafür ist die Verteilung bei den häufiger vetretennen Büchern, wie z.B. Wild Animus, eineigermaßen gleich. Zwar hat Cluster 3 in dieser Hinsicht immer weniger , aber das lässt sich vermutlich durch die kleinere Anzahl an User*innen in diesem Cluster erklären. Dadurch hat dieses Cluster auch weniger Bücher zugeordnet bekommen. Mein 2. Lösungsversuch würde der Hypothese, dass man die User'innen nach den gelesenen Büchern einteilen kann, widersprechen. An dieser Lösung habe ich aber aufgrund der oben erwähnten "Perfektheit" der Datenpunkte Zweifel
