@@ -141,7 +141,7 @@ Zwar besteht anscheinen ein starker Zusammenhang zwischen dem Alter eines Buches
 
 # Vorhersage Alter des Buches und die Anzahl der Bewertungen des Buches
 ```{r}
-fit2 <- lm(alter_zsm_rating$`Year-Of-Publication` ~ alter_zsm_rating$anzahl_ratings)
+fit2 <- lm(alter_zsm_rating$anzahl_ratings ~ alter_zsm_rating$`Year-Of-Publication` )
 ```
 
 ```{r}
