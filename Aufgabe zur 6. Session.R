@@ -10,16 +10,20 @@ library(shiny)
 
 
 model.svm <- readRDS('titanic.svm.rds')
+#model.svm_2 <- readRDS('titanic_2.svm.rds')
 
-# Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
-  # App title ----
+  
   titlePanel("Sollte ich mich von Kreuzfahrten mit Schiffen aus dem 20. Jahrhundert fernhalten?"),
   
   sidebarLayout(
     
     sidebarPanel(
+      
+      #selectInput(inputId = "dataset",
+       #           label = "Choose a dataset:",
+        #          choices = c("Toms Albys Modell", "Mein Modell")),
       
       sliderInput("age",
                   "Alter",
@@ -31,7 +35,7 @@ ui <- fluidPage(
                   c("w" = 1,
                     "m" = 0)),
       
-      helpText("Da diese Simulation mit Daten der Passagiere der Titanic arbeitet ist eine Auswahl des dritten Geschlechtes nicht moeglich. Wir bitten um Ihr Verstaendnis."),
+      helpText("Da diese Simulation mit Daten der Passagiere der Titanic arbeitet, ist eine Auswahl des dritten Geschlechtes nicht moeglich. Wir bitten um Ihr Verstaendnis."),
       
       selectInput("pclass", selected = NULL, "Passagierklasse:",
                   c("1" = 1,
@@ -50,9 +54,14 @@ ui <- fluidPage(
   )
 )
 
-# Define server logic required to draw a histogram ----
+
 server <- function(input, output, session) {
   
+  #datasetInput <- reactive({
+    #switch(input$dataset,
+     #      "Tom Albys Modell" = model.svm,
+      #     "Mein Modell" = model_2.svm)
+  #})
   
   observeEvent(input$action, {
     pclass <- as.numeric(input$pclass)
