@@ -15,7 +15,7 @@ model.svm <- readRDS('titanic.svm.rds')
 ui <- fluidPage(
   
   # App title ----
-  titlePanel("Uberlebensrechner"),
+  titlePanel("Sollte ich mich von Kreuzfahrten mit Schiffen aus dem 20. Jahrhundert fernhalten?"),
   
   sidebarLayout(
     
@@ -27,15 +27,18 @@ ui <- fluidPage(
                   max = 100,
                   value = 30),
       
-      selectInput("sex", selected = NULL, "Geschelcht:",
-                  c("weiblich" = 1,
-                    "maennlich" = 0)),
+      radioButtons("sex", selected = NULL, "Geschlecht:",
+                  c("w" = 1,
+                    "m" = 0)),
+      
+      helpText("Da diese Simulation mit Daten der Passagiere der Titanic arbeitet ist eine Auswahl des dritten Geschlechtes nicht moeglich. Wir bitten um Ihr Verstaendnis."),
+      
       selectInput("pclass", selected = NULL, "Passagierklasse:",
                   c("1" = 1,
                     "2" = 2,
                     "3" = 3)),
       
-      actionButton("action", label = "Wie hoch sind meine Chancen das Unglück zu überleben?")
+      actionButton("action", label = "Berechnen")
     ),
     
     # Main panel for displaying outputs ----
